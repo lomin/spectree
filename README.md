@@ -7,7 +7,7 @@ It also provides the macros '+>>' and 'each+>>' to chain specter transformations
 
 *spectree* is available from Clojars. Add the following dependency to your *project.clj*:
 
-[![Current Version](https://clojars.org/me.lomin/spectree/latest-version.svg)](https://clojars.org/me.lomin/spectree)
+[![Clojars Project](https://img.shields.io/clojars/v/me.lomin.spectree.svg)](https://clojars.org/me.lomin.spectree)
 
 ## Usage
 
