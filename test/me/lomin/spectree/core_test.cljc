@@ -75,7 +75,7 @@
 (deftest generic-examples-test
   (is (= {:a [:x [:c 2]] :e "add-if-not-here"}
          (each+>> specter/transform
-                  (tagged? :b) (constantly :x)
+                  :hiccup/b (constantly :x)
                   :e (constantly "add-if-not-here")
                   :must/f (constantly "not-here")
                   {:a [[:b 1] [:c 2]]})))

@@ -12,6 +12,7 @@ It also provides the macros '+>>' and 'each+>>' to chain specter transformations
 ## Usage
 
 ```clojure
+...
 (require '[me.lomin.spectree.hiccup])
 
 (deftest hiccup-test
@@ -30,11 +31,11 @@ It also provides the macros '+>>' and 'each+>>' to chain specter transformations
                            
 (deftest generic-examples-test
   (is (= {:a [:x [:c 2]] :e "add-if-not-here"}
-         (each+>> specter/transform
-                  (tagged? :b) (constantly :x)
-                  :e (constantly "add-if-not-here")
-                  :must/f (constantly "not-here")
-                  {:a [[:b 1] [:c 2]]})))
+           (each+>> specter/transform
+                    :hiccup/b (constantly :x)
+                    :e (constantly "add-if-not-here")
+                    :must/f (constantly "not-here")
+                    {:a [[:b 1] [:c 2]]})))
 
   (is (= {:a 6 :b 4}
          (+>> specter/transform
