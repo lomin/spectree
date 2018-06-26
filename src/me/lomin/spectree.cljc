@@ -1,27 +1,26 @@
 (ns me.lomin.spectree
-  (:require [me.lomin.spectree.tree-search :as tree-search]
-            [me.lomin.spectree.keyword :as keyword])
+  (:require [com.rpl.specter :as specter])
   #?(:cljs (:require-macros me.lomin.spectree)))
 
-(defprotocol Each
-  (each [self]))
+(defn- each* [arg]
+  (cond
+    (keyword? arg) (list 'me.lomin.spectree.keyword/each arg)
+    (vector? arg) (mapv each* arg)
+    :else arg))
 
-(extend-type #?(:clj clojure.lang.IPersistentVector :cljs cljs.core/PersistentVector)
-  Each
-  (each [self]
-    (mapv #(if (satisfies? Each %) (each %) %) self)))
+(def each
+  (specter/recursive-path [path]
+                          p
+                          (specter/cond-path sequential?
+                                             (specter/if-path path
+                                                              (specter/continue-then-stay specter/ALL p)
+                                                              [specter/ALL p])
+                                             map?
+                                             (specter/if-path path
+                                                              (specter/continue-then-stay specter/MAP-VALS p)
+                                                              [specter/MAP-VALS p]))))
 
-(extend-type #?(:clj clojure.lang.Keyword :cljs cljs.core/Keyword)
-  Each
-  (each [self]
-    (keyword/selector (keyword (namespace self))
-                      (keyword (name self))
-                      self)))
 
-(extend-type #?(:clj clojure.lang.AFunction :cljs function)
-  Each
-  (each [self]
-    (tree-search/selector self)))
 
 #?(:clj
    (do
@@ -39,7 +38,7 @@
        (let [[selector-transformation-pair coll] (pairs args)
              selector+transformer (for [[selector transformation] selector-transformation-pair]
                                     (list f
-                                          (list selector-wrapper selector)
+                                          (selector-wrapper selector)
                                           transformation))]
          (if coll
            (concat (list '->> coll) selector+transformer)
@@ -47,7 +46,7 @@
              (list 'fn [sym] (+>>* selector-wrapper f (concat args [sym])))))))
 
      (defmacro each+>> [f & args]
-       (+>>* 'me.lomin.spectree/each f args))
+       (+>>* each* f args))
 
      (defmacro +>> [f & args]
-       (+>>* 'do f args))))
+       (+>>* identity f args))))

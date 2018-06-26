@@ -1,10 +1,11 @@
 (ns me.lomin.spectree.core-test
   (:require [me.lomin.spectree :as s :refer [+>> each+>>]]
             [me.lomin.spectree.hiccup]
+            [me.lomin.spectree.keyword :as spectree-keyword]
             [com.rpl.specter :as specter]
-    #?(:cljs [cljs.test :refer-macros [deftest is testing]])
-    #?(:clj
-            [clojure.test :refer [deftest is testing]])))
+            #?(:cljs [cljs.test :refer-macros [deftest is testing]])
+            #?(:clj
+               [clojure.test :refer [deftest is testing]])))
 
 (def hiccup [:PS
              [:HEADER [:word "header"]]
@@ -18,17 +19,16 @@
               [:CMD [:word "top"]]]])
 
 (deftest similarities-to-specter
-  (is (= [:PS]
-         (specter/select [specter/FIRST] hiccup)
-         (specter/select specter/FIRST hiccup)
-         (specter/select (s/each [specter/FIRST]) hiccup)))
-
   (is (= (specter/select [:CMD] hiccup)
-         (specter/select (s/each :CMD) hiccup))))
+         (specter/select #each/key :CMD hiccup))))
 
 (deftest differences-with-specter
   (is (not= (specter/select [:CMD] hiccup)
-            (specter/select (s/each :hiccup/CMD) hiccup))))
+            (specter/select #each/key :hiccup/CMD hiccup)))
+
+  (is (not=
+        (specter/select [specter/FIRST] hiccup)
+        (specter/select [(s/each specter/FIRST)] hiccup))))
 
 (defn- tagged?
   ([tag] (partial tagged? tag))
@@ -47,14 +47,14 @@
                                    (fn [[_ & args]] (into {} args))
                                    not-uniques))}))
 
-(deftest hiccup-test
+(deftest ^:unit hiccup-test
   (is (= ["bash" "top"]
-         (specter/select (s/each [:hiccup/CMD :hiccup/word 1])
+         (specter/select #each/key [:hiccup/CMD :hiccup/word 1]
                          hiccup)))
 
   (is (= [[[:UID [:number "501"]] [:PID [:number "45427"]] [:CMD [:word "bash"]]]
           [[:UID [:number "502"]] [:PID [:number "45428"]] [:CMD [:word "top"]]]]
-         (specter/select (s/each [:hiccup/LINE (specter/srange-dynamic (constantly 1) count)])
+         (specter/select #each/key [:hiccup/LINE (specter/srange-dynamic (constantly 1) count)]
                          hiccup)))
 
   (is (= {:PS {:HEADER [:word "header"],
@@ -119,3 +119,18 @@
              (specter/transform (s/each sayang-spec-selector)
                                 sayang-spec-remover
                                 sayang-spec-code))))))
+
+(deftest ^:unit specter-select-each-keyword-equivalence-test
+         (is (= (specter/select
+                  [(spectree-keyword/each :hiccup/li) (specter/selected? #(= 2 (second %)))]
+                  [:section [:ul [:li 1] [:li 2]]])
+                (specter/select
+                  #each/key [:hiccup/li (specter/selected? #(= 2 (second %)))]
+                  [:section [:ul [:li 1] [:li 2]]])))
+
+         (is (= (specter/select
+                  [(spectree-keyword/each :hiccup/li) (specter/filterer #(= % [:li 2]))]
+                  [:section [:ul [:li 1] [:li 2]]])
+                (specter/select
+                  #each/key [:hiccup/li (specter/filterer #(= % [:li 2]))]
+                  [:section [:ul [:li 1] [:li 2]]]))))

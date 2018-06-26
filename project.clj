@@ -1,4 +1,4 @@
-(defproject me.lomin.spectree "0.1.0"
+(defproject me.lomin/spectree "0.2.0"
   :description "Provides an 'each' selector to use in combination with specter and tree-like data structures."
   :url "https://github.com/lomin/spectree"
   :license {:name "Eclipse Public License"
